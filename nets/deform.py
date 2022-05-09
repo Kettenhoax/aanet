@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from nets.deform_conv import DeformConv, ModulatedDeformConv
+from torchvision.ops import DeformConv2d as DeformConv2dOp
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
@@ -28,32 +28,19 @@ class DeformConv2d(nn.Module):
                  double_mask=True,
                  bias=False):
         super(DeformConv2d, self).__init__()
-
         self.modulation = modulation
         self.deformable_groups = deformable_groups
         self.kernel_size = kernel_size
         self.double_mask = double_mask
 
-        if self.modulation:
-            self.deform_conv = ModulatedDeformConv(in_channels,
-                                                   out_channels,
-                                                   kernel_size=kernel_size,
-                                                   stride=stride,
-                                                   padding=dilation,
-                                                   dilation=dilation,
-                                                   groups=groups,
-                                                   deformable_groups=deformable_groups,
-                                                   bias=bias)
-        else:
-            self.deform_conv = DeformConv(in_channels,
-                                          out_channels,
-                                          kernel_size=kernel_size,
-                                          stride=stride,
-                                          padding=dilation,
-                                          dilation=dilation,
-                                          groups=groups,
-                                          deformable_groups=deformable_groups,
-                                          bias=bias)
+        self.deform_conv = DeformConv2dOp(in_channels,
+                                             out_channels,
+                                             kernel_size=kernel_size,
+                                             stride=stride,
+                                             padding=dilation,
+                                             dilation=dilation,
+                                             groups=groups,
+                                             bias=bias)
 
         k = 3 if self.modulation else 2
 
@@ -81,13 +68,11 @@ class DeformConv2d(nn.Module):
             if self.double_mask:
                 mask = mask * 2  # initialize as 1 to work as regular conv
 
-            out = self.deform_conv(x, offset, mask)
+            return self.deform_conv(x, offset, mask)
 
         else:
             offset = self.offset_conv(x)
-            out = self.deform_conv(x, offset)
-
-        return out
+            return self.deform_conv(x, offset)
 
 
 class DeformBottleneck(nn.Module):
@@ -196,9 +181,7 @@ class DeformSimpleBottleneck(nn.Module):
         self.bn1 = norm_layer(width)
         self.conv2 = DeformConv2d(width, width, stride=stride,
                                   dilation=mdconv_dilation,
-                                  deformable_groups=deformable_groups,
-                                  modulation=modulation,
-                                  double_mask=double_mask)
+                                  groups=1, kernel_size=3)
         self.bn2 = norm_layer(width)
         self.conv3 = conv1x1(width, planes)
         self.bn3 = norm_layer(planes)

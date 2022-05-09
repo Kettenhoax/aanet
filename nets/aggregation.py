@@ -333,7 +333,7 @@ class AdaptiveAggregationModule(nn.Module):
                 if simple_bottleneck:
                     branch.append(SimpleBottleneck(num_candidates, num_candidates))
                 else:
-                    branch.append(DeformSimpleBottleneck(num_candidates, num_candidates, modulation=True,
+                    branch.append(DeformSimpleBottleneck(num_candidates, num_candidates,
                                                          mdconv_dilation=mdconv_dilation,
                                                          deformable_groups=deformable_groups))
 
