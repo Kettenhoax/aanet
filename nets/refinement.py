@@ -78,8 +78,8 @@ class StereoDRNetRefinement(nn.Module):
         self.final_conv = nn.Conv2d(32, 1, 3, 1, 1)
 
     def forward(self, low_disp, left_img, right_img):
-        assert low_disp.dim() == 3
-        low_disp = low_disp.unsqueeze(1)  # [B, 1, H, W]
+        if low_disp.dim() == 3:
+            low_disp = low_disp.unsqueeze(1)  # [B, 1, H, W]
         scale_factor = left_img.size(-1) / low_disp.size(-1)
         if scale_factor == 1.0:
             disp = low_disp
@@ -101,7 +101,6 @@ class StereoDRNetRefinement(nn.Module):
         residual_disp = self.final_conv(out)  # [B, 1, H, W]
 
         disp = F.relu(disp + residual_disp, inplace=True)  # [B, 1, H, W]
-        disp = disp.squeeze(1)  # [B, H, W]
 
         return disp
 
@@ -142,9 +141,8 @@ class HourglassRefinement(nn.Module):
         self.final_conv = nn.Conv2d(32, 1, 3, 1, 1)
 
     def forward(self, low_disp, left_img, right_img):
-
-        assert low_disp.dim() == 3
-        low_disp = low_disp.unsqueeze(1)  # [B, 1, H, W]
+        if low_disp.dim() == 3:
+            low_disp = low_disp.unsqueeze(1)  # [B, 1, H, W]
         scale_factor = left_img.size(-1) / low_disp.size(-1)
         if scale_factor == 1.0:
             disp = low_disp
@@ -196,6 +194,5 @@ class HourglassRefinement(nn.Module):
         residual_disp = self.final_conv(x)  # [B, 1, H, W]
 
         disp = F.relu(disp + residual_disp, inplace=True)  # [B, 1, H, W]
-        disp = disp.squeeze(1)  # [B, H, W]
 
         return disp
