@@ -16,9 +16,9 @@ IMAGENET_STD = [0.229, 0.224, 0.225]
 parser = argparse.ArgumentParser()
 
 # Training data
-parser.add_argument('--img_height', default=576, type=int,
+parser.add_argument('--img_height', default=768, type=int,
                     help='Image height for export')
-parser.add_argument('--img_width', default=960, type=int,
+parser.add_argument('--img_width', default=1024, type=int,
                     help='Image width for export')
 
 # Model
@@ -26,7 +26,7 @@ parser.add_argument('--seed', default=326, type=int,
                     help='Random seed for reproducibility')
 parser.add_argument('--output', type=str,
                     help='Path of output ONNX')
-parser.add_argument('--opset_version', default=13,
+parser.add_argument('--opset_version', default=17,
                     type=int, help='Opset version')
 
 # AANet
@@ -92,23 +92,9 @@ def deform_conv2d_symbolic(g, input, weight, offset, mask, bias, stride_h, strid
                 deform_groups_i=n_offset_grps,
                 groups_i=n_weight_grps)
 
-# hardcodes custom operator to implementation provided by mmdeploy.readthedocs.io
-@parse_args('v', 'v', 'i', 'i', 'i')
-def grid_sampler_symbolic(g, input, grid, interpolation_mode, padding_mode, align_corners=False):
-    return g.op(
-        'mmcv::grid_sampler',
-        input,
-        grid,
-        interpolation_mode_i=interpolation_mode,
-        padding_mode_i=padding_mode,
-        align_corners_i=align_corners)
-
 
 register_custom_op_symbolic(
     'torchvision::deform_conv2d', deform_conv2d_symbolic, args.opset_version)
-
-register_custom_op_symbolic(
-    '::grid_sampler', grid_sampler_symbolic, args.opset_version)
 
 
 def main():
